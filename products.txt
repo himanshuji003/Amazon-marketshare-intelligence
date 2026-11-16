@@ -1,0 +1,5 @@
+# One Amazon.in product link per line. Lines starting with # are ignored.
+https://www.amazon.in/Prestige-IRIS-mixer-grinder-Black/dp/B08CFJBZRK/
+https://www.amazon.in/dp/B0GWCRPGDB
+https://www.amazon.in/dp/B01GZSQJPA
+https://www.amazon.in/dp/B075JJ5NQC

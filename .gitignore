@@ -1,0 +1,6 @@
+__pycache__/
+cache/
+.venv/
+data.json
+dashboard.html
+report.xlsx

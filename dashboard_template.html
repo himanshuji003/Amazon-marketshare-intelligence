@@ -1,0 +1,967 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Amazon.in Market Intelligence Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   CSS CUSTOM PROPERTIES — Light & Dark theme tokens
+   ============================================================ */
+:root, [data-theme="light"] {
+  --bg: #F8FAFC; --surface: #FFFFFF; --surface-hover: #F1F5F9;
+  --border: #E2E8F0; --border-subtle: #F1F5F9;
+  --text-1: #0F172A; --text-2: #475569; --text-3: #94A3B8;
+  --accent: #6366F1; --accent-hover: #4F46E5; --accent-light: #818CF8;
+  --accent-bg: #EEF2FF; --accent-text: #4338CA;
+  --shadow-xs: 0 1px 2px rgba(15,23,42,.04);
+  --shadow-sm: 0 1px 3px rgba(15,23,42,.06), 0 1px 2px rgba(15,23,42,.04);
+  --shadow-md: 0 4px 6px -1px rgba(15,23,42,.07), 0 2px 4px -2px rgba(15,23,42,.04);
+  --shadow-lg: 0 10px 15px -3px rgba(15,23,42,.08), 0 4px 6px -4px rgba(15,23,42,.03);
+  --green: #10B981; --green-bg: #ECFDF5; --green-text: #065F46;
+  --red: #EF4444; --red-bg: #FEF2F2; --red-text: #991B1B;
+  --amber: #F59E0B; --amber-bg: #FFFBEB; --amber-text: #92400E;
+  --blue: #3B82F6; --blue-bg: #EFF6FF; --blue-text: #1E40AF;
+  --overlay: rgba(15,23,42,.4);
+  --sidebar-bg: #FFFFFF; --sidebar-border: #E2E8F0;
+  --topbar-bg: rgba(255,255,255,.82);
+}
+[data-theme="dark"] {
+  --bg: #0B1120; --surface: #1A2332; --surface-hover: #243044;
+  --border: #2A3A4E; --border-subtle: #1E2A3C;
+  --text-1: #F1F5F9; --text-2: #94A3B8; --text-3: #64748B;
+  --accent: #818CF8; --accent-hover: #A5B4FC; --accent-light: #6366F1;
+  --accent-bg: rgba(99,102,241,.12); --accent-text: #C7D2FE;
+  --shadow-xs: none; --shadow-sm: none; --shadow-md: none; --shadow-lg: none;
+  --green-bg: rgba(16,185,129,.12); --green-text: #6EE7B7;
+  --red-bg: rgba(239,68,68,.12); --red-text: #FCA5A5;
+  --amber-bg: rgba(245,158,11,.12); --amber-text: #FCD34D;
+  --blue-bg: rgba(59,130,246,.12); --blue-text: #93C5FD;
+  --overlay: rgba(0,0,0,.55);
+  --sidebar-bg: #111827; --sidebar-border: #1F2937;
+  --topbar-bg: rgba(11,17,32,.82);
+}
+
+/* ============================================================
+   RESET & BASE
+   ============================================================ */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{font-size:16px;-webkit-text-size-adjust:100%;scroll-behavior:smooth}
+body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:var(--bg);color:var(--text-1);line-height:1.5;-webkit-font-smoothing:antialiased;overflow-x:hidden;min-height:100vh}
+img{max-width:100%;display:block}button,input{font:inherit;color:inherit}
+button{cursor:pointer;border:none;background:none}a{color:var(--accent);text-decoration:none}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:4px}
+::-webkit-scrollbar{width:6px;height:6px}::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}::-webkit-scrollbar-thumb:hover{background:var(--text-3)}
+
+/* ============================================================
+   APP LAYOUT
+   ============================================================ */
+#app{display:flex;min-height:100vh}
+
+/* --- Sidebar --- */
+.sidebar{width:256px;min-width:256px;background:var(--sidebar-bg);border-right:1px solid var(--sidebar-border);display:flex;flex-direction:column;position:fixed;top:0;left:0;bottom:0;z-index:100;transition:transform .2s ease,width .2s ease}
+.sidebar.collapsed{width:68px;min-width:68px}
+.sidebar.collapsed .sb-label,.sidebar.collapsed .sb-logo-text,.sidebar.collapsed .sb-sec-title{display:none}
+.sidebar.collapsed .sb-item{justify-content:center;padding:10px}
+.sidebar.collapsed .sb-logo{justify-content:center;padding:16px 10px}
+.sb-logo{padding:20px 20px 16px;display:flex;align-items:center;gap:12px;border-bottom:1px solid var(--border)}
+.sb-logo svg{width:28px;height:28px;flex-shrink:0}
+.sb-logo-text{font-weight:700;font-size:15px;white-space:nowrap}
+.sb-nav{flex:1;padding:12px 8px;overflow-y:auto}
+.sb-sec-title{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--text-3);padding:16px 12px 6px;white-space:nowrap}
+.sb-item{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:8px;font-size:14px;font-weight:500;color:var(--text-2);transition:all .15s;white-space:nowrap;width:100%;text-align:left}
+.sb-item:hover{background:var(--surface-hover);color:var(--text-1)}
+.sb-item.active{background:var(--accent-bg);color:var(--accent)}
+.sb-item svg{width:20px;height:20px;flex-shrink:0;opacity:.7}
+.sb-item.active svg{opacity:1}
+.sb-toggle{padding:12px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:center}
+.sb-toggle svg{width:20px;height:20px;color:var(--text-3);transition:transform .2s}
+.sidebar.collapsed .sb-toggle svg{transform:rotate(180deg)}
+
+/* --- Main --- */
+.main{flex:1;margin-left:256px;display:flex;flex-direction:column;min-height:100vh;transition:margin-left .2s ease}
+.sidebar.collapsed~.main{margin-left:68px}
+
+/* --- Topbar --- */
+.topbar{position:sticky;top:0;z-index:50;background:var(--topbar-bg);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);padding:0 32px;height:60px;display:flex;align-items:center;gap:12px}
+.tb-title{font-size:16px;font-weight:600;margin-right:auto;display:flex;align-items:center;gap:8px}
+.tb-badge{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px;background:var(--green-bg);color:var(--green-text)}
+.tb-badge.stale{background:var(--amber-bg);color:var(--amber-text)}
+.tb-btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:7px 14px;border-radius:8px;font-size:13px;font-weight:500;background:var(--surface);border:1px solid var(--border);transition:all .15s}
+.tb-btn:hover{background:var(--surface-hover);border-color:var(--text-3)}
+.tb-btn svg{width:16px;height:16px}
+.theme-toggle{width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;border:1px solid var(--border);background:var(--surface);transition:all .15s}
+.theme-toggle:hover{background:var(--surface-hover)}
+.theme-toggle svg{width:18px;height:18px}
+.mobile-menu-btn{display:none!important}
+
+/* --- Content --- */
+.content{padding:24px 32px 48px;max-width:1400px;width:100%}
+
+/* --- Chips --- */
+.chips-bar{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:20px}
+.chip{display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:20px;font-size:13px;font-weight:500;background:var(--surface);border:1px solid var(--border);transition:all .15s;cursor:pointer;white-space:nowrap}
+.chip:hover{border-color:var(--accent)}
+.chip.active{background:var(--accent-bg);border-color:var(--accent);color:var(--accent)}
+.chip-dot{width:8px;height:8px;border-radius:50%;display:inline-block}
+.chip-div{width:1px;height:24px;background:var(--border);margin:0 4px}
+
+/* ============================================================
+   KPI CARDS
+   ============================================================ */
+.kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px}
+.kpi-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px 20px 18px;box-shadow:var(--shadow-sm);transition:box-shadow .2s;position:relative;overflow:hidden}
+.kpi-card:hover{box-shadow:var(--shadow-md)}
+.kpi-hdr{display:flex;align-items:center;gap:6px;margin-bottom:12px}
+.kpi-lbl{font-size:13px;font-weight:500;color:var(--text-2)}
+.kpi-i{width:16px;height:16px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;cursor:help;color:var(--text-3);position:relative;font-size:10px;font-weight:700;border:1px solid var(--border);flex-shrink:0}
+.kpi-i:hover .kpi-tip,.kpi-i:focus .kpi-tip{opacity:1;visibility:visible;transform:translateX(-50%) translateY(0)}
+.kpi-tip{position:absolute;bottom:calc(100% + 8px);left:50%;transform:translateX(-50%) translateY(4px);background:var(--text-1);color:var(--bg);font-size:12px;font-weight:400;padding:8px 12px;border-radius:8px;opacity:0;visibility:hidden;transition:all .15s;z-index:20;pointer-events:none;max-width:300px;white-space:normal;line-height:1.4;width:max-content}
+.kpi-badge{margin-left:auto;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;padding:2px 8px;border-radius:4px;background:var(--amber-bg);color:var(--amber-text)}
+.kpi-val{font-size:32px;font-weight:700;letter-spacing:-.02em;line-height:1;margin-bottom:8px;font-variant-numeric:tabular-nums}
+.kpi-sub{font-size:13px;color:var(--text-2);display:flex;align-items:center;gap:6px}
+.kpi-spark{position:absolute;bottom:14px;right:18px;opacity:.45}
+
+/* ============================================================
+   SECTION CARDS
+   ============================================================ */
+.sec-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;box-shadow:var(--shadow-sm);margin-bottom:24px;overflow:hidden}
+.sec-hdr{display:flex;align-items:center;gap:8px;padding:16px 20px;border-bottom:1px solid var(--border)}
+.sec-title{font-size:15px;font-weight:600}
+.sec-actions{margin-left:auto;display:flex;align-items:center;gap:8px}
+.sec-body{padding:0}.sec-body.pad{padding:20px}
+.toggle-grp{display:flex;background:var(--bg);border-radius:8px;padding:2px;border:1px solid var(--border)}
+.tog-btn{padding:5px 12px;border-radius:6px;font-size:12px;font-weight:500;color:var(--text-2);transition:all .15s}
+.tog-btn.active{background:var(--surface);color:var(--text-1);box-shadow:var(--shadow-xs)}
+
+/* ============================================================
+   PRODUCT TABLE
+   ============================================================ */
+.tbl-wrap{overflow-x:auto}
+.dtbl{width:100%;border-collapse:collapse;font-size:13px}
+.dtbl thead th{padding:10px 16px;text-align:left;font-weight:600;font-size:12px;color:var(--text-3);text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid var(--border);white-space:nowrap;cursor:pointer;user-select:none;background:var(--surface)}
+.dtbl thead th:hover{color:var(--text-1)}
+.dtbl thead th.nc{text-align:right}
+.dtbl thead th .si{margin-left:4px;opacity:.4;font-size:11px}
+.dtbl thead th.sorted .si{opacity:1;color:var(--accent)}
+.dtbl tbody tr{border-bottom:1px solid var(--border-subtle);transition:background .1s;cursor:pointer}
+.dtbl tbody tr:hover{background:var(--surface-hover)}
+.dtbl tbody td{padding:12px 16px;vertical-align:middle}
+.dtbl tbody td.nc{text-align:right;font-variant-numeric:tabular-nums}
+.dtbl tfoot td{padding:12px 16px;font-weight:600;font-size:13px;border-top:2px solid var(--border);background:var(--bg)}
+.dtbl tfoot td.nc{text-align:right;font-variant-numeric:tabular-nums}
+.pc{display:flex;align-items:center;gap:12px;min-width:240px}
+.pc-img{width:40px;height:40px;border-radius:8px;background:var(--bg);border:1px solid var(--border);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;color:#fff}
+.pc-brand{font-size:12px;font-weight:600;color:var(--text-2)}
+.pc-title{font-size:13px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:220px}
+.sb-wrap{display:flex;align-items:center;gap:8px;min-width:120px}
+.sb-track{flex:1;height:6px;background:var(--bg);border-radius:3px;overflow:hidden}
+.sb-fill{height:100%;border-radius:3px;transition:width .4s ease}
+.sb-pct{font-size:12px;font-weight:600;min-width:40px;text-align:right;font-variant-numeric:tabular-nums}
+.rc{display:flex;align-items:center;gap:4px}
+.r-star{color:var(--amber);font-size:12px}
+.r-cnt{font-size:11px;color:var(--text-3)}
+.nil{display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600;background:var(--bg);color:var(--text-3)}
+
+/* ============================================================
+   GRID LAYOUTS
+   ============================================================ */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-bottom:24px}
+
+/* ============================================================
+   DONUT
+   ============================================================ */
+.donut-c{display:flex;align-items:center;gap:24px;flex-wrap:wrap;justify-content:center}
+.donut-svg{width:200px;height:200px}
+.donut-ctr{font-size:22px;font-weight:700;fill:var(--text-1);text-anchor:middle;dominant-baseline:central}
+.donut-csub{font-size:11px;fill:var(--text-3);font-weight:500;text-anchor:middle}
+.donut-leg{flex:1;min-width:180px}
+.dl-item{display:flex;align-items:center;gap:8px;padding:6px 0;font-size:13px;border-bottom:1px solid var(--border-subtle)}
+.dl-dot{width:10px;height:10px;border-radius:3px;flex-shrink:0}
+.dl-lbl{flex:1;font-weight:500}
+.dl-val{font-weight:600;font-variant-numeric:tabular-nums}
+.dl-pct{color:var(--text-3);font-size:12px;min-width:44px;text-align:right;font-variant-numeric:tabular-nums}
+
+/* ============================================================
+   HEATMAP
+   ============================================================ */
+.hm-grid{display:grid;gap:3px}
+.hm-cell{display:flex;align-items:center;justify-content:center;padding:10px 8px;font-size:13px;font-weight:600;border-radius:6px;transition:all .15s;cursor:pointer;font-variant-numeric:tabular-nums;min-height:44px}
+.hm-cell:hover{transform:scale(1.06);z-index:2;box-shadow:var(--shadow-md)}
+.hm-cell.t3{background:var(--green-bg);color:var(--green-text)}
+.hm-cell.t10{background:var(--blue-bg);color:var(--blue-text)}
+.hm-cell.t20{background:var(--surface-hover);color:var(--text-2)}
+.hm-cell.none{background:var(--bg);color:var(--text-3)}
+.hm-cell.sp{position:relative}
+.hm-cell.sp::after{content:'Ad';position:absolute;top:2px;right:4px;font-size:9px;font-weight:700;color:var(--amber-text);opacity:.8}
+.hm-hdr{font-size:11px;font-weight:600;color:var(--text-2);padding:8px;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hm-kw{font-size:12px;font-weight:600;color:var(--text-2);padding:8px 12px;display:flex;align-items:center;white-space:nowrap}
+.hm-leg{display:flex;gap:12px;align-items:center;flex-wrap:wrap;padding:12px 0 4px}
+.hm-li{display:flex;align-items:center;gap:4px;font-size:11px;color:var(--text-3)}
+.hm-ld{width:12px;height:12px;border-radius:3px}
+
+/* ============================================================
+   SOV BARS & GAP
+   ============================================================ */
+.sov-row{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border-subtle)}
+.sov-lbl{width:100px;font-size:13px;font-weight:600;flex-shrink:0}
+.sov-trk{flex:1;height:24px;background:var(--bg);border-radius:6px;display:flex;overflow:hidden}
+.sov-seg{height:100%;transition:width .4s ease;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff}
+.sov-val{min-width:50px;text-align:right;font-size:13px;font-weight:600;font-variant-numeric:tabular-nums}
+.gap-row{display:flex;align-items:center;gap:12px;padding:8px 0;border-bottom:1px solid var(--border-subtle)}
+.gap-lbl{width:100px;font-size:13px;font-weight:600;flex-shrink:0}
+.gap-ctr{flex:1;height:20px;position:relative}
+.gap-mid{position:absolute;left:50%;top:0;bottom:0;width:1px;background:var(--border)}
+.gap-fill{position:absolute;top:2px;height:16px;border-radius:4px;transition:all .4s ease;display:flex;align-items:center;font-size:10px;font-weight:700;padding:0 6px}
+.gap-fill.pos{background:var(--amber-bg);color:var(--amber-text)}
+.gap-fill.neg{background:var(--green-bg);color:var(--green-text)}
+.gap-axis{display:flex;justify-content:space-between;font-size:10px;color:var(--text-3);padding:2px 0 0}
+
+/* ============================================================
+   INSIGHTS
+   ============================================================ */
+.ins-list{list-style:none}
+.ins-item{display:flex;gap:12px;padding:12px 0;border-bottom:1px solid var(--border-subtle);font-size:14px;line-height:1.55;color:var(--text-2)}
+.ins-item:last-child{border-bottom:none}
+.ins-icon{width:32px;height:32px;border-radius:8px;display:flex;flex-shrink:0;align-items:center;justify-content:center;font-size:16px}
+.ins-item strong{color:var(--text-1)}
+
+/* ============================================================
+   DRAWER
+   ============================================================ */
+.dr-overlay{position:fixed;inset:0;background:var(--overlay);z-index:200;opacity:0;visibility:hidden;transition:all .2s}
+.dr-overlay.open{opacity:1;visibility:visible}
+.drawer{position:fixed;top:0;right:0;bottom:0;width:420px;max-width:90vw;background:var(--surface);z-index:201;transform:translateX(100%);transition:transform .25s ease;overflow-y:auto;border-left:1px solid var(--border);box-shadow:var(--shadow-lg)}
+.drawer.open{transform:translateX(0)}
+.dr-hdr{display:flex;align-items:center;gap:12px;padding:20px;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--surface);z-index:1}
+.dr-close{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;border:1px solid var(--border);background:var(--surface);margin-left:auto}
+.dr-close:hover{background:var(--surface-hover)}
+.dr-body{padding:20px}
+.dr-img{width:80px;height:80px;border-radius:12px;background:var(--bg);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:24px;color:#fff}
+.dr-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:20px}
+.dr-item{padding:12px;background:var(--bg);border-radius:8px;border:1px solid var(--border)}
+.dr-il{font-size:11px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:.04em}
+.dr-iv{font-size:18px;font-weight:700;margin-top:4px}
+
+/* ============================================================
+   KEYWORD MODAL
+   ============================================================ */
+.modal-ov{position:fixed;inset:0;background:var(--overlay);z-index:300;display:none;align-items:center;justify-content:center}
+.modal-ov.open{display:flex}
+.modal{background:var(--surface);border-radius:16px;border:1px solid var(--border);box-shadow:var(--shadow-lg);max-width:600px;width:90vw;max-height:80vh;overflow:hidden;display:flex;flex-direction:column}
+.modal-hdr{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px}
+.modal-ttl{font-size:15px;font-weight:600;flex:1}
+.modal-x{width:28px;height:28px;border-radius:6px;display:flex;align-items:center;justify-content:center}
+.modal-x:hover{background:var(--surface-hover)}
+.modal-bd{padding:16px 20px;overflow-y:auto;flex:1}
+.kl-item{display:flex;align-items:center;gap:12px;padding:8px 0;border-bottom:1px solid var(--border-subtle);font-size:13px}
+.kl-item:last-child{border-bottom:none}
+.kl-pos{width:28px;text-align:center;font-weight:700;font-size:14px;font-variant-numeric:tabular-nums}
+.kl-brand{font-weight:600;min-width:80px}
+.kl-asin{flex:1;color:var(--text-2);font-size:12px;font-family:monospace}
+.kl-badge{font-size:10px;font-weight:700;padding:2px 6px;border-radius:4px;background:var(--amber-bg);color:var(--amber-text);text-transform:uppercase}
+.kl-item.tracked{background:var(--accent-bg);margin:0 -20px;padding:8px 20px;border-radius:0}
+
+/* ============================================================
+   IMPORT
+   ============================================================ */
+.imp-zone{border:2px dashed var(--border);border-radius:12px;padding:40px 24px;text-align:center;transition:all .2s;cursor:pointer}
+.imp-zone:hover,.imp-zone.dragover{border-color:var(--accent);background:var(--accent-bg)}
+.exp-btn{display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:500;color:var(--text-2);padding:5px 10px;border-radius:6px;border:1px solid var(--border);transition:all .15s}
+.exp-btn:hover{background:var(--surface-hover);color:var(--text-1)}
+.period-lbl{font-size:12px;color:var(--text-3);margin-bottom:16px;font-style:italic}
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+@media(max-width:1200px){.kpi-row{grid-template-columns:repeat(2,1fr)}.g2{grid-template-columns:1fr}}
+@media(max-width:1024px){
+  .sidebar{transform:translateX(-100%)}.sidebar.mob-open{transform:translateX(0)}
+  .main{margin-left:0!important}.content{padding:16px}.topbar{padding:0 16px}
+  .mobile-menu-btn{display:flex!important}
+}
+@media(max-width:640px){
+  .kpi-row{grid-template-columns:1fr}.kpi-val{font-size:26px}
+  .tb-title span{display:none}.donut-c{flex-direction:column}.drawer{width:100vw}.pc-title{max-width:140px}
+}
+
+/* ============================================================
+   PRINT
+   ============================================================ */
+@media print{
+  .sidebar,.topbar,.dr-overlay,.drawer,.modal-ov,.sec-actions,.chips-bar,.mobile-menu-btn,.theme-toggle,.tb-btn,.import-sec{display:none!important}
+  .main{margin-left:0!important}.content{padding:0;max-width:100%}
+  .sec-card{break-inside:avoid;box-shadow:none;border:1px solid #ddd}
+  .kpi-row{grid-template-columns:repeat(4,1fr)}.g2{grid-template-columns:1fr 1fr}
+  body{font-size:11px}.kpi-val{font-size:22px}
+}
+
+/* ============================================================
+   ANIMATIONS
+   ============================================================ */
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.fade-in{animation:fadeUp .3s ease forwards}
+.s1{animation-delay:.05s}.s2{animation-delay:.1s}.s3{animation-delay:.15s}.s4{animation-delay:.2s}
+
+/* ===== real-data hardening ===== */
+.toast{position:fixed;bottom:24px;left:50%;transform:translate(-50%,20px);background:var(--text-1);color:var(--surface);padding:10px 18px;border-radius:10px;font-size:13px;font-weight:500;opacity:0;pointer-events:none;transition:all .25s;z-index:999;max-width:90vw}
+.toast.show{opacity:1;transform:translate(-50%,0)}.toast.err{background:#d03b3b;color:#fff}
+.warn-bar{display:flex;gap:12px;align-items:flex-start;justify-content:space-between;background:var(--amber-bg);color:var(--amber-text);border-radius:10px;padding:10px 14px;margin-bottom:16px;font-size:12.5px}
+.warn-bar ul{margin:4px 0 0 16px;padding:0}.warn-x{background:none;border:0;color:inherit;font-size:20px;line-height:1;cursor:pointer}
+.empty{padding:24px;text-align:center;color:var(--text-3);font-size:13px}
+.chips-bar{flex-direction:column;gap:8px}.chip-row{display:flex;flex-wrap:wrap;gap:8px}
+.chip-more{background:transparent;border-style:dashed;color:var(--text-2)}
+.kpi-card{overflow:visible}.sec-card{overflow:visible}
+.sec-body{overflow:hidden;border-radius:0 0 12px 12px}
+.sec-body.pad{overflow:visible}
+.pc-img,.dr-img{position:relative;overflow:hidden}
+.pc-letter{color:var(--text-3)}
+.pc-img img,.dr-img img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#fff}
+.pc-brand{display:flex;align-items:center;gap:6px}
+.tbl-more{padding:12px 20px;border-top:1px solid var(--border-subtle)}
+.hm-wrap{overflow-x:auto;padding-bottom:4px}
+.hm-corner,.hm-kw{position:sticky;left:0;background:var(--surface);z-index:1}
+.hm-kw{overflow:hidden;text-overflow:ellipsis}
+.hm-hdr{display:flex;align-items:center;justify-content:center;gap:5px}.hm-hdr span{overflow:hidden;text-overflow:ellipsis}
+.sov-lbl,.gap-lbl{display:flex;align-items:center;gap:6px;min-width:0;width:120px}
+.sov-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sov-key{display:flex;gap:14px;flex-wrap:wrap;font-size:11px;color:var(--text-3);padding-top:8px}
+.sov-key i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:4px;vertical-align:-1px}
+.gap-val{min-width:56px;text-align:right;font-size:13px;font-weight:600;font-variant-numeric:tabular-nums}
+.hist-leg{display:flex;flex-wrap:wrap;gap:14px;margin-bottom:10px;font-size:12px;color:var(--text-2)}
+.hist-lg{display:inline-flex;align-items:center;gap:6px}.hist-lg b{color:var(--text-1)}
+.dr-kw{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border-subtle);font-size:13px}
+@media(max-width:700px){.tb-badge{display:none}.topbar{gap:6px}}
+.g2>*,.kpi-row>*{min-width:0}.g2{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+@media(max-width:1200px){.g2{grid-template-columns:minmax(0,1fr)}}
+.donut-c{flex-wrap:wrap}.main{min-width:0}.content{min-width:0}
+.warn-bar.info{background:var(--blue-bg);color:var(--text-1)}
+@media print{.warn-bar,.toast{display:none!important}}
+</style>
+</head>
+<body>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<div id="app">
+  <!-- ===== SIDEBAR ===== -->
+  <aside class="sidebar" id="sidebar" role="navigation" aria-label="Main navigation">
+    <div class="sb-logo">
+      <svg viewBox="0 0 28 28" fill="none"><rect width="28" height="28" rx="8" fill="var(--accent)"/><path d="M8 14h4l3-6 3 12 3-6h4" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <span class="sb-logo-text">Market Intel</span>
+    </div>
+    <nav class="sb-nav">
+      <div class="sb-sec-title">Analytics</div>
+      <button class="sb-item active" data-sec="dashboard"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="2" width="7" height="7" rx="2"/><rect x="11" y="2" width="7" height="7" rx="2"/><rect x="2" y="11" width="7" height="7" rx="2"/><rect x="11" y="11" width="7" height="7" rx="2"/></svg><span class="sb-label">Dashboard</span></button>
+      <button class="sb-item" data-sec="products"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="14" height="14" rx="2"/><path d="M3 8h14M8 8v9"/></svg><span class="sb-label">Products</span></button>
+      <button class="sb-item" data-sec="keywords"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8.5" cy="8.5" r="5"/><path d="M12 12l5 5"/></svg><span class="sb-label">Keywords</span></button>
+      <button class="sb-item" data-sec="history"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="10" cy="10" r="7"/><path d="M10 6v4l3 3"/></svg><span class="sb-label">History</span></button>
+      <div class="sb-sec-title">Manage</div>
+      <button class="sb-item" data-sec="import"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10 3v10M6 9l4 4 4-4M3 14v2a1 1 0 001 1h12a1 1 0 001-1v-2"/></svg><span class="sb-label">Import / Export</span></button>
+      <button class="sb-item" data-sec="settings"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="10" cy="10" r="3"/><path d="M10 2v2M10 16v2M2 10h2M16 10h2M4.9 4.9l1.4 1.4M13.7 13.7l1.4 1.4M4.9 15.1l1.4-1.4M13.7 6.3l1.4-1.4"/></svg><span class="sb-label">Settings</span></button>
+    </nav>
+    <button class="sb-toggle" id="sbToggle" aria-label="Toggle sidebar"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M13 4l-6 6 6 6"/></svg></button>
+  </aside>
+
+  <!-- ===== MAIN ===== -->
+  <div class="main">
+    <header class="topbar">
+      <button class="tb-btn mobile-menu-btn" id="mobMenu" aria-label="Open menu"><svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 5h12M3 9h12M3 13h12"/></svg></button>
+      <div class="tb-title">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><rect width="20" height="20" rx="5" fill="var(--accent)"/><path d="M5 10h3l2-4 2 8 2-4h3" stroke="#fff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span>Amazon.in Market Intelligence</span>
+      </div>
+      <div id="freshBadge" class="tb-badge"></div>
+      <button class="tb-btn" id="refreshBtn"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 8a6 6 0 0111.2-3M14 8a6 6 0 01-11.2 3"/><path d="M14 2v3h-3M2 14v-3h3"/></svg> Refresh</button>
+      <button class="tb-btn" id="printBtn"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="4" y="1" width="8" height="4"/><rect x="1" y="5" width="14" height="7" rx="1"/><rect x="4" y="10" width="8" height="5"/></svg> Print</button>
+      <button class="theme-toggle" id="themeBtn" aria-label="Toggle dark mode">
+        <svg class="ico-sun" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="10" cy="10" r="4"/><path d="M10 2v2M10 16v2M2 10h2M16 10h2M4.9 4.9l1.4 1.4M13.7 13.7l1.4 1.4M4.9 15.1l1.4-1.4M13.7 6.3l1.4-1.4"/></svg>
+        <svg class="ico-moon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" style="display:none"><path d="M17 10a7 7 0 01-9.9 6.4A7 7 0 0110 3a5.5 5.5 0 007 7z"/></svg>
+      </button>
+    </header>
+
+    <div class="content" id="mainContent">
+      <div class="chips-bar" id="chipsBar" role="toolbar" aria-label="Filter"></div>
+      <div class="period-lbl" id="periodLbl"></div>
+      <div id="warnBar"></div>
+      <div class="kpi-row" id="kpiRow"></div>
+      <div class="sec-card fade-in s2" id="prodSec"></div>
+      <div class="g2" id="chartsRow">
+        <div class="sec-card fade-in s3" id="donutSec"></div>
+        <div class="sec-card fade-in s3" id="hmSec"></div>
+      </div>
+      <div class="g2" id="sovRow">
+        <div class="sec-card fade-in s4" id="sovSec"></div>
+        <div class="sec-card fade-in s4" id="gapSec"></div>
+      </div>
+      <div class="sec-card fade-in s4" id="insSec"></div>
+      <div class="sec-card fade-in s4" id="histSec"></div>
+      <div class="sec-card import-sec" id="impSec" style="margin-top:24px">
+        <div class="sec-hdr"><span class="sec-title">Import / Export Data</span></div>
+        <div class="sec-body pad">
+          <div class="imp-zone" id="impZone">
+            <div style="font-size:32px;margin-bottom:12px;opacity:.4">📂</div>
+            <div style="font-size:14px;color:var(--text-2);margin-bottom:8px"><strong>Drop data.json here</strong> or click to browse</div>
+            <div style="font-size:12px;color:var(--text-3)">JSON file matching the dashboard schema &middot; { meta, products[], keywords[], history[]? }</div>
+          </div>
+          <input type="file" accept=".json" style="display:none" id="fileIn">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Drawer -->
+  <div class="dr-overlay" id="drOv" aria-hidden="true"></div>
+  <aside class="drawer" id="drw" role="complementary" aria-label="Product details">
+    <div class="dr-hdr"><span style="font-weight:600;font-size:15px">Product Details</span>
+      <button class="dr-close" id="drClose" aria-label="Close"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4l8 8M12 4l-8 8"/></svg></button>
+    </div>
+    <div class="dr-body" id="drBody"></div>
+  </aside>
+
+  <!-- Keyword modal -->
+  <div class="modal-ov" id="kwOv">
+    <div class="modal" role="dialog" aria-modal="true">
+      <div class="modal-hdr"><span class="modal-ttl" id="kwTitle">Keyword Listings</span>
+        <button class="modal-x" id="kwClose" aria-label="Close"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3l8 8M11 3l-8 8"/></svg></button>
+      </div>
+      <div class="modal-bd" id="kwBody"></div>
+    </div>
+  </div>
+</div>
+
+<script id="data-inline" type="application/json"></script>
+<script>
+/* =============================================================
+   SAMPLE DATA — Realistic 4 products × 4 keywords.
+   Replace at runtime via "Load data.json" button / drag-and-drop.
+   ============================================================= */
+const SAMPLE_DATA={
+  meta:{scraped_at:"2026-11-14T18:30:00+05:30",marketplace:"amazon.in",top_n:20},
+  products:[
+    {asin:"B0CXYZ1234",brand:"boAt",title:"boAt Airdopes 141 Bluetooth TWS in Ear Earbuds with 42H Playtime, Low Latency",image:null,price:1299,mrp:4490,rating:4.1,review_count:285400,bought_text:"50K+ bought in past month",units:50000,bsr:1},
+    {asin:"B0NXYZ5678",brand:"Noise",title:"Noise Buds VS104 TWS Earbuds with 45H Playtime, Quad Mic with ENC",image:null,price:799,mrp:2499,rating:4.0,review_count:142300,bought_text:"20K+ bought in past month",units:20000,bsr:3},
+    {asin:"B0OXYZ9012",brand:"OnePlus",title:"OnePlus Nord Buds 2 True Wireless in Ear Earbuds, 12.4mm Titanium Drivers",image:null,price:2299,mrp:2999,rating:4.3,review_count:38200,bought_text:"10K+ bought in past month",units:10000,bsr:7},
+    {asin:"B0JXYZ3456",brand:"JBL",title:"JBL Tune 230NC TWS, Active Noise Cancellation, JBL Pure Bass Sound",image:null,price:3999,mrp:7999,rating:4.2,review_count:22100,bought_text:"5K+ bought in past month",units:5000,bsr:12}
+  ],
+  keywords:[
+    {keyword:"earbuds",listings:[
+      {position:1,asin:"B0CXYZ1234",brand:"boAt",sponsored:false},{position:2,asin:"B0NXYZ5678",brand:"Noise",sponsored:true},
+      {position:3,asin:"B0ABCD0001",brand:"Realme",sponsored:false},{position:4,asin:"B0OXYZ9012",brand:"OnePlus",sponsored:false},
+      {position:5,asin:"B0ABCD0002",brand:"boAt",sponsored:false},{position:6,asin:"B0ABCD0003",brand:"Samsung",sponsored:true},
+      {position:7,asin:"B0ABCD0004",brand:"Noise",sponsored:false},{position:8,asin:"B0ABCD0005",brand:"Zebronics",sponsored:false},
+      {position:9,asin:"B0JXYZ3456",brand:"JBL",sponsored:false},{position:10,asin:"B0ABCD0006",brand:"boAt",sponsored:false},
+      {position:11,asin:"B0ABCD0007",brand:"Sony",sponsored:true},{position:12,asin:"B0ABCD0008",brand:"Realme",sponsored:false},
+      {position:13,asin:"B0ABCD0009",brand:"Mivi",sponsored:false},{position:14,asin:"B0ABCD0010",brand:"OnePlus",sponsored:false},
+      {position:15,asin:"B0ABCD0011",brand:"Noise",sponsored:true},{position:16,asin:"B0ABCD0012",brand:"boAt",sponsored:false},
+      {position:17,asin:"B0ABCD0013",brand:"Skullcandy",sponsored:false},{position:18,asin:"B0ABCD0014",brand:"Samsung",sponsored:false},
+      {position:19,asin:"B0ABCD0015",brand:"JBL",sponsored:false},{position:20,asin:"B0ABCD0016",brand:"Mivi",sponsored:false}
+    ]},
+    {keyword:"wireless earbuds",listings:[
+      {position:1,asin:"B0NXYZ5678",brand:"Noise",sponsored:true},{position:2,asin:"B0CXYZ1234",brand:"boAt",sponsored:false},
+      {position:3,asin:"B0ABCD0017",brand:"Samsung",sponsored:true},{position:4,asin:"B0ABCD0018",brand:"boAt",sponsored:false},
+      {position:5,asin:"B0OXYZ9012",brand:"OnePlus",sponsored:false},{position:6,asin:"B0ABCD0019",brand:"Realme",sponsored:false},
+      {position:7,asin:"B0JXYZ3456",brand:"JBL",sponsored:false},{position:8,asin:"B0ABCD0020",brand:"Noise",sponsored:false},
+      {position:9,asin:"B0ABCD0021",brand:"boAt",sponsored:false},{position:10,asin:"B0ABCD0022",brand:"Mivi",sponsored:false},
+      {position:11,asin:"B0ABCD0023",brand:"Sony",sponsored:false},{position:12,asin:"B0ABCD0024",brand:"Zebronics",sponsored:true},
+      {position:13,asin:"B0ABCD0025",brand:"OnePlus",sponsored:false},{position:14,asin:"B0ABCD0026",brand:"Noise",sponsored:false},
+      {position:15,asin:"B0ABCD0027",brand:"JBL",sponsored:true},{position:16,asin:"B0ABCD0028",brand:"boAt",sponsored:false},
+      {position:17,asin:"B0ABCD0029",brand:"Skullcandy",sponsored:false},{position:18,asin:"B0ABCD0030",brand:"Realme",sponsored:false},
+      {position:19,asin:"B0ABCD0031",brand:"Samsung",sponsored:false},{position:20,asin:"B0ABCD0032",brand:"Mivi",sponsored:false}
+    ]},
+    {keyword:"bluetooth earbuds",listings:[
+      {position:1,asin:"B0CXYZ1234",brand:"boAt",sponsored:false},{position:2,asin:"B0ABCD0033",brand:"Realme",sponsored:false},
+      {position:3,asin:"B0NXYZ5678",brand:"Noise",sponsored:false},{position:4,asin:"B0ABCD0034",brand:"boAt",sponsored:true},
+      {position:5,asin:"B0ABCD0035",brand:"Mivi",sponsored:false},{position:6,asin:"B0OXYZ9012",brand:"OnePlus",sponsored:false},
+      {position:7,asin:"B0ABCD0036",brand:"Zebronics",sponsored:false},{position:8,asin:"B0ABCD0037",brand:"Noise",sponsored:true},
+      {position:9,asin:"B0ABCD0038",brand:"Samsung",sponsored:false},{position:10,asin:"B0ABCD0039",brand:"boAt",sponsored:false},
+      {position:11,asin:"B0JXYZ3456",brand:"JBL",sponsored:false},{position:12,asin:"B0ABCD0040",brand:"Sony",sponsored:false},
+      {position:13,asin:"B0ABCD0041",brand:"Realme",sponsored:false},{position:14,asin:"B0ABCD0042",brand:"Noise",sponsored:false},
+      {position:15,asin:"B0ABCD0043",brand:"boAt",sponsored:false},{position:16,asin:"B0ABCD0044",brand:"OnePlus",sponsored:true},
+      {position:17,asin:"B0ABCD0045",brand:"JBL",sponsored:false},{position:18,asin:"B0ABCD0046",brand:"Mivi",sponsored:false},
+      {position:19,asin:"B0ABCD0047",brand:"Samsung",sponsored:false},{position:20,asin:"B0ABCD0048",brand:"Skullcandy",sponsored:false}
+    ]},
+    {keyword:"tws earbuds",listings:[
+      {position:1,asin:"B0ABCD0049",brand:"boAt",sponsored:true},{position:2,asin:"B0CXYZ1234",brand:"boAt",sponsored:false},
+      {position:3,asin:"B0NXYZ5678",brand:"Noise",sponsored:false},{position:4,asin:"B0ABCD0050",brand:"Realme",sponsored:false},
+      {position:5,asin:"B0ABCD0051",brand:"Noise",sponsored:true},{position:6,asin:"B0OXYZ9012",brand:"OnePlus",sponsored:false},
+      {position:7,asin:"B0ABCD0052",brand:"Zebronics",sponsored:false},{position:8,asin:"B0ABCD0053",brand:"boAt",sponsored:false},
+      {position:9,asin:"B0ABCD0054",brand:"Mivi",sponsored:false},{position:10,asin:"B0JXYZ3456",brand:"JBL",sponsored:false},
+      {position:11,asin:"B0ABCD0055",brand:"Samsung",sponsored:false},{position:12,asin:"B0ABCD0056",brand:"Sony",sponsored:true},
+      {position:13,asin:"B0ABCD0057",brand:"OnePlus",sponsored:false},{position:14,asin:"B0ABCD0058",brand:"Noise",sponsored:false},
+      {position:15,asin:"B0ABCD0059",brand:"Realme",sponsored:false},{position:16,asin:"B0ABCD0060",brand:"boAt",sponsored:false},
+      {position:17,asin:"B0ABCD0061",brand:"JBL",sponsored:false},{position:18,asin:"B0ABCD0062",brand:"Mivi",sponsored:false},
+      {position:19,asin:"B0ABCD0063",brand:"Skullcandy",sponsored:false},{position:20,asin:"B0ABCD0064",brand:"Samsung",sponsored:false}
+    ]}
+  ],
+  history:[
+    {date:"2026-06-01",brand:"boAt",units:42000,sov:.30},{date:"2026-07-01",brand:"boAt",units:44000,sov:.32},
+    {date:"2026-08-01",brand:"boAt",units:46000,sov:.33},{date:"2026-09-01",brand:"boAt",units:47000,sov:.34},
+    {date:"2026-10-01",brand:"boAt",units:48000,sov:.35},{date:"2026-11-01",brand:"boAt",units:50000,sov:.36},
+    {date:"2026-06-01",brand:"Noise",units:18000,sov:.22},{date:"2026-07-01",brand:"Noise",units:18500,sov:.23},
+    {date:"2026-08-01",brand:"Noise",units:19000,sov:.24},{date:"2026-09-01",brand:"Noise",units:19500,sov:.24},
+    {date:"2026-10-01",brand:"Noise",units:19800,sov:.25},{date:"2026-11-01",brand:"Noise",units:20000,sov:.25},
+    {date:"2026-06-01",brand:"OnePlus",units:7000,sov:.14},{date:"2026-07-01",brand:"OnePlus",units:7500,sov:.14},
+    {date:"2026-08-01",brand:"OnePlus",units:8000,sov:.15},{date:"2026-09-01",brand:"OnePlus",units:8500,sov:.15},
+    {date:"2026-10-01",brand:"OnePlus",units:9000,sov:.15},{date:"2026-11-01",brand:"OnePlus",units:10000,sov:.16},
+    {date:"2026-06-01",brand:"JBL",units:4500,sov:.08},{date:"2026-07-01",brand:"JBL",units:4600,sov:.09},
+    {date:"2026-08-01",brand:"JBL",units:4700,sov:.09},{date:"2026-09-01",brand:"JBL",units:4800,sov:.09},
+    {date:"2026-10-01",brand:"JBL",units:4900,sov:.10},{date:"2026-11-01",brand:"JBL",units:5000,sov:.10}
+  ]
+};
+
+/* ============================================================
+   APP STATE
+   ============================================================ */
+let DATA=null,WARN=[],IS_SAMPLE=true,INITED=false;
+const S={theme:'light',sbCollapsed:false,sbMob:false,fBrand:[],fKw:[],sortCol:'units',sortDir:'desc',donutMode:'units',sovMode:'all',drAsin:null,tblAll:false,brandsAll:false,hmAll:false,brandChipsAll:false,kwChipsAll:false,histMode:'units',warnHidden:false};
+
+/* Brand colours: validated categorical palette (light + dark steps), first 8 brands by units.
+   Every other brand is neutral grey so colours never repeat. */
+const PAL_L=['#2a78d6','#eb6834','#1baf7a','#eda100','#e87ba4','#008300','#6250d6','#e34948'];
+const PAL_D=['#3987e5','#d95926','#199e70','#c98500','#d55181','#0ca30c','#9085e9','#e66767'];
+const OTHER_COL='#94A3B8';
+let BRAND_ORDER=[];
+function bc(b){const i=BRAND_ORDER.indexOf(b);if(i<0||i>=PAL_L.length)return OTHER_COL;return(S.theme==='dark'?PAL_D:PAL_L)[i]}
+function initBC(){const u={};DATA.products.forEach(p=>{u[p.brand]=(u[p.brand]||0)+(p.units||0)});BRAND_ORDER=Object.keys(u).sort((a,b)=>u[b]-u[a])}
+function dot(b){return`<span class="chip-dot" style="background:${bc(b)}"></span>`}
+
+/* ============================================================
+   FORMATTERS
+   ============================================================ */
+const F={
+  n:v=>v==null?'—':v.toLocaleString('en-IN'),
+  c:v=>v==null?'—':'₹'+Math.round(v).toLocaleString('en-IN'),
+  p:(v,d=1)=>v==null?'—':(v*100).toFixed(d)+'%',
+  pn:(v,d=1)=>v==null?0:+(v*100).toFixed(d),
+  k:v=>{if(v==null)return'—';if(v>=1e6)return(v/1e6).toFixed(1)+'M';if(v>=1e3)return(v/1e3).toFixed(v>=1e4?0:1)+'K';return''+Math.round(v)},
+  d:s=>{if(!s)return'—';const d=new Date(s);if(isNaN(d))return'—';return d.toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'})}
+};
+function $(id){return document.getElementById(id)}
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function toast(msg,kind){const t=$('toast');t.textContent=msg;t.className='toast show'+(kind==='err'?' err':'');clearTimeout(toast._t);toast._t=setTimeout(()=>{t.className='toast'},kind==='err'?7000:3500)}
+
+/* ============================================================
+   DATA NORMALISER — accepts the data.json schema AND the raw
+   scraper keys (units_last_month, images[]), fixes types,
+   merges brand spellings (BOAT = boAt = Boat) and collects
+   data-quality warnings instead of silently breaking.
+   ============================================================ */
+const toNum=v=>{if(v==null||v==='')return null;if(typeof v==='number')return isFinite(v)?v:null;const n=parseFloat(String(v).replace(/[^0-9.\-]/g,''));return isFinite(n)?n:null};
+function parseBought(t){if(!t)return null;const m=String(t).match(/([\d,.]+)\s*([KkMm]?)\+?\s*bought/);if(!m)return null;let n=parseFloat(m[1].replace(/,/g,''));if(!isFinite(n))return null;const x=m[2].toLowerCase();if(x==='k')n*=1e3;else if(x==='m')n*=1e6;return Math.round(n)}
+const bkey=s=>String(s||'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();
+function cleanBrand(b){let s=String(b==null?'':b).trim();s=s.replace(/^visit the\s+/i,'').replace(/\s+store$/i,'').replace(/^brand:\s*/i,'').trim();return s||'Unknown'}
+
+function normalizeData(raw){
+  const warn=[];
+  if(!raw||typeof raw!=='object'||Array.isArray(raw))throw new Error('The file must be a JSON object: { meta, products[], keywords[] }.');
+  if(!Array.isArray(raw.products)||!raw.products.length)throw new Error('The "products" array is missing or empty.');
+  if(!Array.isArray(raw.keywords)||!raw.keywords.length)throw new Error('The "keywords" array is missing or empty.');
+  const seen=new Set(),prods=[];
+  raw.products.forEach(p=>{
+    if(!p||!p.asin)return;const asin=String(p.asin).trim();if(!asin||seen.has(asin))return;seen.add(asin);
+    const bt=p.bought_text||null;let units=toNum(p.units!=null?p.units:p.units_last_month);if(units==null)units=parseBought(bt);
+    prods.push({asin,brand:cleanBrand(p.brand),title:String(p.title||asin),image:p.image||(Array.isArray(p.images)&&p.images[0])||null,price:toNum(p.price),mrp:toNum(p.mrp),rating:toNum(p.rating),review_count:toNum(p.review_count!=null?p.review_count:p.reviews),bought_text:bt,units,bsr:toNum(p.bsr)});
+  });
+  if(!prods.length)throw new Error('No product contains an "asin".');
+  // brand spellings -> one canonical name
+  const cnt={};const add=(b,w)=>{const k=bkey(b);if(!k)return;(cnt[k]=cnt[k]||{});cnt[k][b]=(cnt[k][b]||0)+w};
+  prods.forEach(p=>add(p.brand,1000));
+  raw.keywords.forEach(k=>((k&&k.listings)||[]).forEach(l=>add(cleanBrand(l&&l.brand),1)));
+  const disp={};Object.keys(cnt).forEach(k=>{disp[k]=Object.entries(cnt[k]).sort((a,b)=>b[1]-a[1])[0][0]});
+  const tracked=new Set(prods.map(p=>bkey(p.brand)));
+  const ckey={};Object.keys(cnt).forEach(k=>{let t=k;if(!tracked.has(k)){for(const tk of tracked){if(k.startsWith(tk+' ')){t=tk;break}}}ckey[k]=t});
+  const merged={};
+  const cn=b=>{const o=cleanBrand(b),k=bkey(o),c=disp[ckey[k]||k]||o;if(c!==o)merged[o]=c;return c};
+  prods.forEach(p=>{p.brand=cn(p.brand)});
+  const keywords=[];let maxPos=0;
+  raw.keywords.forEach(k=>{
+    if(!k||!Array.isArray(k.listings))return;
+    const ls=k.listings.filter(l=>l&&l.asin).map((l,i)=>({position:toNum(l.position)||i+1,asin:String(l.asin),brand:cn(l.brand),sponsored:l.sponsored===true||l.sponsored==='true'||l.sponsored===1||l.sponsored==='yes'})).sort((a,b)=>a.position-b.position);
+    if(!ls.length)return;ls.forEach(l=>{if(l.position>maxPos)maxPos=l.position});
+    keywords.push({keyword:String(k.keyword||'keyword '+(keywords.length+1)),listings:ls});
+  });
+  if(!keywords.length)throw new Error('No keyword contains "listings".');
+  const history=Array.isArray(raw.history)?raw.history.filter(h=>h&&h.date&&h.brand).map(h=>({date:String(h.date).slice(0,10),brand:cn(h.brand),units:toNum(h.units),sov:toNum(h.sov)})):[];
+  const meta=Object.assign({marketplace:'amazon.in'},raw.meta||{});
+  if(!meta.scraped_at||isNaN(new Date(meta.scraped_at)))meta.scraped_at=new Date().toISOString();
+  meta.top_n=Math.max(toNum(meta.top_n)||0,maxPos);
+  const noU=prods.filter(p=>p.units==null).length,noP=prods.filter(p=>p.price==null).length;
+  if(noU)warn.push(noU+' of '+prods.length+' products have no "bought in past month" badge: shown as NIL and excluded from share calculations.');
+  if(noP)warn.push(noP+' products have no price: revenue share cannot be computed for them.');
+  const mk=Object.keys(merged);if(mk.length)warn.push('Brand spellings merge kiye: '+mk.slice(0,6).map(k=>k+' → '+merged[k]).join(', ')+(mk.length>6?' ...':''));
+  return{data:{meta,products:prods,keywords,history},warn};
+}
+function setData(raw,sample){
+  const r=normalizeData(raw);DATA=r.data;WARN=sample?[]:r.warn;IS_SAMPLE=!!sample;
+  S.fBrand=[];S.fKw=[];S.tblAll=false;S.brandsAll=false;S.hmAll=false;S.warnHidden=false;initBC();
+}
+
+/* ============================================================
+   METRICS ENGINE — all formulas computed here
+   ============================================================ */
+function calc(){
+  const prods=S.fBrand.length?DATA.products.filter(p=>S.fBrand.includes(p.brand)):DATA.products;
+  const kws=S.fKw.length?DATA.keywords.filter(k=>S.fKw.includes(k.keyword)):DATA.keywords;
+  const brands=BRAND_ORDER.filter(b=>prods.some(p=>p.brand===b));
+  const sold=prods.filter(p=>p.units!=null);
+  const totU=sold.reduce((s,p)=>s+p.units,0);
+  const totR=sold.filter(p=>p.price!=null).reduce((s,p)=>s+p.units*p.price,0);
+  const pm=prods.map(p=>{
+    const us=p.units!=null&&totU>0?p.units/totU:null;
+    const rev=p.units!=null&&p.price!=null?p.units*p.price:null;
+    const rs=rev!=null&&totR>0?rev/totR:null;
+    return{...p,unitShare:us,revenue:rev,revShare:rs};
+  });
+  const bm={};brands.forEach(b=>{const bp=pm.filter(p=>p.brand===b);bm[b]={known:bp.some(p=>p.units!=null),units:bp.reduce((s,p)=>s+(p.units||0),0),revenue:bp.reduce((s,p)=>s+(p.revenue||0),0)};bm[b].unitShare=totU>0?bm[b].units/totU:0;bm[b].revShare=totR>0?bm[b].revenue/totR:0});
+  let totP=0,totOrg=0,totAds=0;const bP={},bO={},bA={};brands.forEach(b=>{bP[b]=0;bO[b]=0;bA[b]=0});
+  kws.forEach(kw=>kw.listings.forEach(l=>{totP++;if(l.sponsored)totAds++;else totOrg++;if(bP[l.brand]!==undefined){bP[l.brand]++;if(l.sponsored)bA[l.brand]++;else bO[l.brand]++}}));
+  const LINKS=!!(DATA.meta&&DATA.meta.mode==='links');
+  const trP0=brands.reduce((s,b)=>s+bP[b],0);
+  const bSOV={};brands.forEach(b=>{const sa=totP>0?bP[b]/totP:0,so=totOrg>0?bO[b]/totOrg:0,sd=totAds>0?bA[b]/totAds:0;
+    const rel=trP0>0?bP[b]/trP0:0;
+    bSOV[b]={sovAll:sa,sovOrg:so,sovAds:sd,sovRel:rel,orgC:bO[b],adsC:bA[b],totC:bP[b],gap:bm[b].known?(LINKS?rel:sa)-bm[b].unitShare:null}});
+  const sum=o=>Object.values(o).reduce((a,b)=>a+b,0);
+  const trP=sum(bP),trO=sum(bO),trA=sum(bA);
+  const oSOV=totP>0?trP/totP:0,oOSOV=totOrg>0?trO/totOrg:0,oASOV=totAds>0?trA/totAds:0;
+  // product x keyword (drawer)
+  const rm={};kws.forEach(kw=>{rm[kw.keyword]={};prods.forEach(p=>{const mine=kw.listings.filter(l=>l.asin===p.asin);const org=mine.filter(l=>!l.sponsored);rm[kw.keyword][p.asin]={organic:org.length?Math.min(...org.map(l=>l.position)):null,best:mine.length?Math.min(...mine.map(l=>l.position)):null,sponsored:mine.some(l=>l.sponsored)}})});
+  // brand x keyword (heatmap): best organic position of ANY listing of that brand
+  const hm={};kws.forEach(kw=>{hm[kw.keyword]={};brands.forEach(b=>{const mine=kw.listings.filter(l=>l.brand===b);const org=mine.filter(l=>!l.sponsored);hm[kw.keyword][b]={organic:org.length?Math.min(...org.map(l=>l.position)):null,best:mine.length?Math.min(...mine.map(l=>l.position)):null,sponsored:mine.some(l=>l.sponsored)}})});
+  return{prods,kws,brands,pm,bm,bSOV,totU,totR,oSOV,oOSOV,oASOV,totP,totOrg,totAds,trP,trO,trA,rm,hm};
+}
+
+/* ============================================================
+   SVG HELPERS
+   ============================================================ */
+function sparkSVG(vals,w=80,h=24,col='var(--accent)'){
+  if(!vals||vals.length<2)return'';
+  const mn=Math.min(...vals),mx=Math.max(...vals),rng=mx-mn||1;
+  const pts=vals.map((v,i)=>`${(i/(vals.length-1)*w).toFixed(1)},${(h-2-((v-mn)/rng)*(h-4)).toFixed(1)}`);
+  const last=pts[pts.length-1].split(',');
+  return`<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" fill="none"><polyline points="${pts.join(' ')}" stroke="${col}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="${last[0]}" cy="${last[1]}" r="2" fill="${col}"/></svg>`;
+}
+
+/* ============================================================
+   RENDER PIPELINE
+   ============================================================ */
+function render(){const m=calc();rPeriod();rFresh();rWarn();rChips(m);rKPI(m);rTable(m);rDonut(m);rHM(m);rSOV(m);rGap(m);rIns(m);rHist(m)}
+
+function rPeriod(){$('periodLbl').textContent=`Last 30 days (estimated, as of ${F.d(DATA.meta.scraped_at)})`}
+
+function rFresh(){
+  const b=$('freshBadge');
+  if(IS_SAMPLE){b.className='tb-badge stale';b.innerHTML='<span style="width:6px;height:6px;border-radius:50%;background:var(--amber);display:inline-block"></span> Sample data — load your data.json';return}
+  const h=(Date.now()-new Date(DATA.meta.scraped_at).getTime())/3.6e6;
+  if(h<24){b.className='tb-badge';b.innerHTML=`<span style="width:6px;height:6px;border-radius:50%;background:var(--green);display:inline-block"></span> Fresh — ${F.d(DATA.meta.scraped_at)}`}
+  else{b.className='tb-badge stale';b.innerHTML=`<span style="width:6px;height:6px;border-radius:50%;background:var(--amber);display:inline-block"></span> ${Math.round(h)}h old — re-run the script`}
+}
+
+function rWarn(){
+  const w=$('warnBar');
+  const scope=(DATA.meta&&DATA.meta.scope_note)?`<div class="warn-bar info" role="note"><div><strong>Scope</strong> ${esc(DATA.meta.scope_note)}</div></div>`:'';
+  if(!WARN.length||S.warnHidden){w.innerHTML=scope;return}
+  w.innerHTML=scope+`<div class="warn-bar" role="status"><div><strong>Data notes</strong><ul>${WARN.map(x=>'<li>'+esc(x)+'</li>').join('')}</ul></div><button class="warn-x" id="warnX" aria-label="Dismiss">×</button></div>`;
+  $('warnX').onclick=()=>{S.warnHidden=true;rWarn()};
+}
+
+function rChips(m){
+  const LIM=10;
+  const bl=BRAND_ORDER;let bsel=bl.map((b,i)=>({b,i}));
+  if(!S.brandChipsAll&&bl.length>LIM)bsel=bsel.filter(x=>x.i<LIM||S.fBrand.includes(x.b));
+  const kl=DATA.keywords;let ksel=kl.map((k,i)=>({k,i}));
+  if(!S.kwChipsAll&&kl.length>LIM)ksel=ksel.filter(x=>x.i<LIM||S.fKw.includes(x.k.keyword));
+  let h='<div class="chip-row" aria-label="Brands">'+bsel.map(x=>{const a=S.fBrand.includes(x.b)?' active':'';return`<button class="chip${a}" data-t="b" data-i="${x.i}" aria-pressed="${!!a}">${dot(x.b)}${esc(x.b)}</button>`}).join('');
+  if(bl.length>LIM)h+=`<button class="chip chip-more" data-t="bm">${S.brandChipsAll?'Show fewer brands':'+'+(bl.length-bsel.length)+' more brands'}</button>`;
+  h+='</div><div class="chip-row" aria-label="Keywords">'+ksel.map(x=>{const a=S.fKw.includes(x.k.keyword)?' active':'';return`<button class="chip${a}" data-t="k" data-i="${x.i}" aria-pressed="${!!a}">🔍 ${esc(x.k.keyword)}</button>`}).join('');
+  if(kl.length>LIM)h+=`<button class="chip chip-more" data-t="km">${S.kwChipsAll?'Show fewer keywords':'+'+(kl.length-ksel.length)+' more keywords'}</button>`;
+  if(S.fBrand.length||S.fKw.length)h+='<button class="chip chip-more" data-t="clr">Clear filters</button>';
+  h+='</div>';
+  $('chipsBar').innerHTML=h;
+  $('chipsBar').querySelectorAll('.chip').forEach(c=>{c.onclick=()=>{
+    const t=c.dataset.t,i=+c.dataset.i;
+    if(t==='b'){const b=BRAND_ORDER[i],j=S.fBrand.indexOf(b);if(j>=0)S.fBrand.splice(j,1);else S.fBrand.push(b)}
+    else if(t==='k'){const k=DATA.keywords[i].keyword,j=S.fKw.indexOf(k);if(j>=0)S.fKw.splice(j,1);else S.fKw.push(k)}
+    else if(t==='bm')S.brandChipsAll=!S.brandChipsAll;
+    else if(t==='km')S.kwChipsAll=!S.kwChipsAll;
+    else if(t==='clr'){S.fBrand=[];S.fKw=[]}
+    render();
+  }});
+}
+
+function rKPI(m){
+  const hist=DATA.history||[];const dates=[...new Set(hist.map(h=>h.date))].sort();
+  const uHist=dates.map(d=>hist.filter(h=>h.date===d&&m.brands.includes(h.brand)).reduce((s,e)=>s+(e.units||0),0));
+  const sHist=dates.map(d=>{const ents=hist.filter(h=>h.date===d&&m.brands.includes(h.brand));return ents.length?ents.reduce((s,e)=>s+(e.sov||0),0):0});
+  const leader=m.pm.filter(p=>p.unitShare!=null).sort((a,b)=>b.unitShare-a.unitShare)[0];
+  const cards=[
+    {l:'Leader Share (Units)',v:F.p(leader&&leader.unitShare),s:leader?`${esc(leader.brand)} leads with ${F.k(leader.units)} units`:'No "bought" data for these products',t:'Unit Share = product units ÷ sum of tracked units. Based on the "bought in past month" badge (a lower-bound bucket estimate).',spark:sparkSVG(uHist,70,22),badge:'Estimated'},
+    {l:'SOV (All)',v:F.p(m.oSOV),s:`${m.brands.length} brands × ${m.kws.length} keywords`,t:`Share of Voice (All) = tracked-brand placements ÷ all placements across the keyword result pages (top ${DATA.meta.top_n}). Organic + Sponsored.`,spark:sparkSVG(sHist,70,22),badge:'Proxy'},
+    {l:'Organic SOV',v:F.p(m.oOSOV),s:`${m.totOrg} organic slots scanned`,t:'Organic SOV = tracked organic placements ÷ all organic placements. Excludes Sponsored results.',spark:'',badge:'Proxy'},
+    {l:'Ads SOV',v:F.p(m.oASOV),s:`${m.totAds} ad slots scanned`,t:'Ads SOV = tracked sponsored placements ÷ all sponsored placements. Only Sponsored results.',spark:'',badge:'Proxy'}
+  ];
+  $('kpiRow').innerHTML=cards.map((c,i)=>`<div class="kpi-card fade-in s${i+1}"><div class="kpi-hdr"><span class="kpi-lbl">${c.l}</span><span class="kpi-i" tabindex="0" aria-label="Info">i<span class="kpi-tip">${c.t}</span></span><span class="kpi-badge">${c.badge}</span></div><div class="kpi-val">${c.v}</div><div class="kpi-sub">${c.s}</div>${c.spark?`<div class="kpi-spark">${c.spark}</div>`:''}</div>`).join('');
+}
+
+function rTable(m){
+  const asc=S.sortDir==='asc';
+  const sorted=[...m.pm].sort((a,b)=>{let av=a[S.sortCol],bv=b[S.sortCol];const miss=asc?Infinity:-Infinity;if(av==null)av=miss;if(bv==null)bv=miss;return asc?av-bv:bv-av});
+  const shown=S.tblAll?sorted:sorted.slice(0,10);
+  const cols=[{k:'product',l:'Product',n:false},{k:'units',l:'Est. Units',n:true},{k:'unitShare',l:'Unit Share',n:true},{k:'revShare',l:'Rev Share',n:true},{k:'price',l:'Price',n:true},{k:'rating',l:'Rating',n:true},{k:'bsr',l:'BSR',n:true}];
+  const si=c=>S.sortCol===c?(asc?'↑':'↓'):'↕';
+  const th=cols.map(c=>`<th class="${c.n?'nc':''}${S.sortCol===c.k?' sorted':''}" data-s="${c.k}">${c.l}${c.k!=='product'?`<span class="si">${si(c.k)}</span>`:''}</th>`).join('');
+  const bar=(v,col)=>v!=null?`<div class="sb-wrap"><div class="sb-track"><div class="sb-fill" style="width:${F.pn(v)}%;background:${col}"></div></div><span class="sb-pct">${F.p(v)}</span></div>`:'<span class="nil">NIL</span>';
+  const tb=shown.map(p=>{
+    const col=bc(p.brand);
+    const img=`<div class="pc-img"><span class="pc-letter">${esc(p.brand.charAt(0).toUpperCase())}</span>${p.image?`<img src="${esc(p.image)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">`:''}</div>`;
+    return`<tr data-a="${esc(p.asin)}" tabindex="0"><td><div class="pc">${img}<div><div class="pc-brand">${dot(p.brand)}${esc(p.brand)}</div><div class="pc-title" title="${esc(p.title)}">${esc(p.title)}</div></div></div></td><td class="nc">${p.units!=null?F.n(p.units):'<span class="nil">NIL</span>'}</td><td class="nc">${bar(p.unitShare,col)}</td><td class="nc">${bar(p.revShare,col)}</td><td class="nc">${F.c(p.price)}${p.price!=null&&p.mrp?`<br><small style="color:var(--text-3);text-decoration:line-through">${F.c(p.mrp)}</small>`:''}</td><td class="nc">${p.rating!=null?`<div class="rc" style="justify-content:flex-end"><span class="r-star">★</span> <strong>${p.rating}</strong> <span class="r-cnt">(${F.k(p.review_count)})</span></div>`:'—'}</td><td class="nc"><strong>${p.bsr!=null?'#'+F.n(p.bsr):'—'}</strong></td></tr>`;
+  }).join('');
+  const more=sorted.length>10?`<div class="tbl-more"><button class="exp-btn" id="tblMore">${S.tblAll?'Show top 10':'Show all '+sorted.length+' products'}</button></div>`:'';
+  $('prodSec').innerHTML=`<div class="sec-hdr"><span class="sec-title">Product Performance</span><span class="kpi-i" tabindex="0">i<span class="kpi-tip">Est. Units is parsed from the "bought in past month" badge, a lower-bound bucket estimate. Products with no badge show NIL and are left out of share calculations.</span></span><div class="sec-actions"><button class="exp-btn" id="csvBtn"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M7 2v7M4 6l3 3 3-3M2 10v2h10v-2"/></svg> CSV</button></div></div><div class="sec-body"><div class="tbl-wrap"><table class="dtbl" aria-label="Product performance"><thead><tr>${th}</tr></thead><tbody>${tb}</tbody><tfoot><tr><td><strong>Total (${sorted.length} products)</strong></td><td class="nc">${F.n(m.totU)}</td><td class="nc">${m.totU>0?'100%':'—'}</td><td class="nc">${m.totR>0?'100%':'—'}</td><td class="nc">—</td><td>—</td><td class="nc">—</td></tr></tfoot></table></div>${more}</div>`;
+  $('prodSec').querySelectorAll('th[data-s]').forEach(t=>{t.onclick=()=>{const c=t.dataset.s;if(c==='product')return;if(S.sortCol===c)S.sortDir=S.sortDir==='asc'?'desc':'asc';else{S.sortCol=c;S.sortDir=c==='bsr'?'asc':'desc'}render()}});
+  $('prodSec').querySelectorAll('tbody tr').forEach(r=>{r.onclick=()=>openDr(r.dataset.a);r.onkeydown=e=>{if(e.key==='Enter')openDr(r.dataset.a)}});
+  $('csvBtn').onclick=()=>exportCSV(m);
+  const tm=$('tblMore');if(tm)tm.onclick=()=>{S.tblAll=!S.tblAll;render()};
+}
+
+function donutSegs(m,mode){
+  const all=m.brands.map(b=>({b,col:bc(b),val:mode==='units'?m.bm[b].units:m.bm[b].revenue,pct:mode==='units'?m.bm[b].unitShare:m.bm[b].revShare})).filter(s=>s.val>0).sort((a,b)=>b.val-a.val);
+  if(all.length<=8)return all;
+  const top=all.slice(0,7),rest=all.slice(7);
+  top.push({b:'Other ('+rest.length+')',col:OTHER_COL,val:rest.reduce((s,x)=>s+x.val,0),pct:rest.reduce((s,x)=>s+x.pct,0)});
+  return top;
+}
+function rDonut(m){
+  const mode=S.donutMode,segs=donutSegs(m,mode),tot=segs.reduce((s,x)=>s+x.val,0);
+  const head=`<div class="sec-hdr"><span class="sec-title">${DATA.meta&&DATA.meta.mode==='links'?'Market Share (your '+DATA.products.length+' products only)':'Market Share'}</span><div class="sec-actions"><div class="toggle-grp"><button class="tog-btn${mode==='units'?' active':''}" data-m="units">Units</button><button class="tog-btn${mode==='revenue'?' active':''}" data-m="revenue">Revenue</button></div></div></div>`;
+  let body;
+  if(!segs.length)body='<div class="sec-body pad"><div class="empty">Market share cannot be computed: none of these products has a "bought in past month" badge'+(mode==='revenue'?' and a price':'')+'.</div></div>';
+  else{
+    const cx=100,cy=100,r=70,sw=28,circ=2*Math.PI*r;let off=0,paths='';
+    segs.forEach(s=>{const len=s.pct*circ,g=segs.length>1?2:0,d=Math.max(0,len-g);paths+=`<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${s.col}" stroke-width="${sw}" stroke-dasharray="${d} ${circ-d}" stroke-dashoffset="${-off}" transform="rotate(-90 ${cx} ${cy})"><title>${esc(s.b)}: ${F.p(s.pct)}</title></circle>`;off+=len});
+    const svg=`<svg class="donut-svg" viewBox="0 0 200 200" role="img" aria-label="Market share by brand">${paths}<text x="${cx}" y="${cy-6}" class="donut-ctr">${mode==='units'?F.k(tot):F.c(tot)}</text><text x="${cx}" y="${cy+14}" class="donut-csub">${mode==='units'?'Est. Units':'Est. Revenue'}</text></svg>`;
+    const leg=segs.map(s=>`<div class="dl-item"><span class="dl-dot" style="background:${s.col}"></span><span class="dl-lbl">${esc(s.b)}</span><span class="dl-val">${mode==='units'?F.k(s.val):F.c(s.val)}</span><span class="dl-pct">${F.p(s.pct)}</span></div>`).join('');
+    body=`<div class="sec-body pad"><div class="donut-c">${svg}<div class="donut-leg">${leg}</div></div></div>`;
+  }
+  $('donutSec').innerHTML=head+body;
+  $('donutSec').querySelectorAll('.tog-btn').forEach(b=>{b.onclick=()=>{S.donutMode=b.dataset.m;render()}});
+}
+
+function rHM(m){
+  const sorted=m.brands.slice().sort((a,b)=>(m.bm[b].units||0)-(m.bm[a].units||0));
+  const cols=S.hmAll?sorted:sorted.slice(0,8);
+  let hdr='<div class="hm-hdr hm-corner"></div>'+cols.map(b=>`<div class="hm-hdr" title="${esc(b)}">${dot(b)}<span>${esc(b)}</span></div>`).join('');
+  let rows='';
+  m.kws.forEach(kw=>{
+    const ki=DATA.keywords.indexOf(kw);
+    rows+=`<div class="hm-kw" title="${esc(kw.keyword)}">${esc(kw.keyword)}</div>`;
+    cols.forEach(b=>{
+      const rk=m.hm[kw.keyword][b];let cls='hm-cell none',txt='—';
+      if(rk.organic!=null){txt='#'+rk.organic;cls=rk.organic<=3?'hm-cell t3':rk.organic<=10?'hm-cell t10':'hm-cell t20'}
+      else if(rk.best!=null){txt='#'+rk.best;cls='hm-cell t20 sp'}
+      rows+=`<div class="${cls}" data-ki="${ki}" tabindex="0" role="button" aria-label="${esc(b)}: ${txt} for ${esc(kw.keyword)}">${txt}</div>`;
+    });
+  });
+  const more=sorted.length>8?`<button class="exp-btn" id="hmMore" style="margin-top:12px">${S.hmAll?'Show top 8 brands':'Show all '+sorted.length+' brands'}</button>`:'';
+  $('hmSec').innerHTML=`<div class="sec-hdr"><span class="sec-title">Keyword × Brand Rank</span><span class="kpi-i" tabindex="0">i<span class="kpi-tip">Best organic position of any listing of that brand, per keyword (top ${DATA.meta.top_n}). Green = top 3, Blue = 4–10, Grey = 11+, — = not ranked. "Ad" = the brand only appears as a sponsored result. Click a cell to see the full result list.</span></span></div><div class="sec-body pad"><div class="hm-wrap"><div class="hm-grid" style="grid-template-columns:150px repeat(${cols.length},minmax(76px,1fr));min-width:${150+cols.length*79}px">${hdr}${rows}</div></div><div class="hm-leg"><div class="hm-li"><div class="hm-ld" style="background:var(--green-bg);border:1px solid var(--green)"></div>Top 3</div><div class="hm-li"><div class="hm-ld" style="background:var(--blue-bg);border:1px solid var(--blue)"></div>4–10</div><div class="hm-li"><div class="hm-ld" style="background:var(--surface-hover);border:1px solid var(--border)"></div>11+</div><div class="hm-li"><div class="hm-ld" style="background:var(--bg);border:1px solid var(--border)"></div>Not ranked</div></div>${more}</div>`;
+  $('hmSec').querySelectorAll('.hm-cell').forEach(c=>{c.onclick=()=>openKw(+c.dataset.ki);c.onkeydown=e=>{if(e.key==='Enter')c.click()}});
+  const hmm=$('hmMore');if(hmm)hmm.onclick=()=>{S.hmAll=!S.hmAll;render()};
+}
+
+function rSOV(m){
+  const mode=S.sovMode;
+  const list=m.brands.slice().sort((a,b)=>m.bSOV[b].sovAll-m.bSOV[a].sovAll);
+  const shown=S.brandsAll?list:list.slice(0,10);
+  const parts=b=>{const s=m.bSOV[b];if(mode==='within-organic')return[s.sovOrg,0,s.sovOrg];if(mode==='within-ads')return[0,s.sovAds,s.sovAds];return[m.totP?s.orgC/m.totP:0,m.totP?s.adsC/m.totP:0,s.sovAll]};
+  const data=shown.map(b=>({b,col:bc(b),p:parts(b)}));
+  const oo=m.totOrg-m.trO,oa=m.totAds-m.trA;let op;
+  if(mode==='within-organic'){const v=m.totOrg?oo/m.totOrg:0;op=[v,0,v]}
+  else if(mode==='within-ads'){const v=m.totAds?oa/m.totAds:0;op=[0,v,v]}
+  else op=[m.totP?oo/m.totP:0,m.totP?oa/m.totP:0,m.totP?(oo+oa)/m.totP:0];
+  data.push({b:'Other brands',col:OTHER_COL,p:op,other:true});
+  const maxv=Math.max(.0001,...data.map(r=>r.p[0]+r.p[1]));
+  const rows=data.map(r=>`<div class="sov-row"><span class="sov-lbl">${r.other?`<span class="chip-dot" style="background:${OTHER_COL}"></span>`:dot(r.b)}<span class="sov-name" title="${esc(r.b)}">${esc(r.b)}</span></span><div class="sov-trk"><div class="sov-seg" style="width:${r.p[0]/maxv*100}%;background:${r.col}" title="Organic: ${F.p(r.p[0])}"></div><div class="sov-seg" style="width:${r.p[1]/maxv*100}%;background:${r.col};opacity:.4" title="Ads: ${F.p(r.p[1])}"></div></div><span class="sov-val">${F.p(r.p[2])}</span></div>`).join('');
+  const hidden=list.length-shown.length;
+  const more=list.length>10?`<button class="exp-btn" id="sovMore" style="margin-top:12px">${S.brandsAll?'Show top 10 brands':'Show all '+list.length+' brands'}</button>`:'';
+  $('sovSec').innerHTML=`<div class="sec-hdr"><span class="sec-title">Share of Voice</span><div class="sec-actions"><div class="toggle-grp"><button class="tog-btn${mode==='all'?' active':''}" data-v="all">All</button><button class="tog-btn${mode==='within-organic'?' active':''}" data-v="within-organic">Organic</button><button class="tog-btn${mode==='within-ads'?' active':''}" data-v="within-ads">Ads</button></div></div></div><div class="sec-body pad">${rows}<div class="sov-key"><span><i style="background:var(--text-2)"></i>Solid = organic</span><span><i style="background:var(--text-2);opacity:.4"></i>Light = ads</span>${hidden>0?`<span>${hidden} smaller tracked brands hidden</span>`:''}</div>${more}</div>`;
+  $('sovSec').querySelectorAll('.tog-btn').forEach(b=>{b.onclick=()=>{S.sovMode=b.dataset.v;render()}});
+  const sm=$('sovMore');if(sm)sm.onclick=()=>{S.brandsAll=!S.brandsAll;render()};
+}
+
+function rGap(m){
+  const known=m.brands.filter(b=>m.bSOV[b].gap!=null).sort((a,b)=>m.bSOV[b].gap-m.bSOV[a].gap);
+  const nil=m.brands.length-known.length;
+  const list=(!S.brandsAll&&known.length>10)?[...known.slice(0,5),...known.slice(-5)]:known;
+  const maxG=Math.max(.01,...list.map(b=>Math.abs(m.bSOV[b].gap)));
+  const rows=list.map(b=>{const g=m.bSOV[b].gap,pct=Math.abs(g)/maxG*45,pos=g>=0;
+    const style=pos?`left:50%;width:${pct}%`:`right:50%;width:${pct}%;justify-content:flex-end`;
+    return`<div class="gap-row"><span class="gap-lbl">${dot(b)}<span class="sov-name" title="${esc(b)}">${esc(b)}</span></span><div class="gap-ctr"><div class="gap-mid"></div><div class="gap-fill ${pos?'pos':'neg'}" style="${style}" title="${esc(b)}: ${F.p(g)}"></div></div><span class="gap-val">${g>=0?'+':''}${F.p(g)}</span></div>`}).join('');
+  const body=known.length?`${rows}<div class="gap-axis"><span>← Selling &gt; visibility</span><span>0</span><span>Visible &gt; selling →</span></div>${known.length>10&&!S.brandsAll?'<div class="sov-key"><span>Showing the 5 most over- and 5 most under-visible brands</span></div>':''}${nil?`<div class="sov-key"><span>${nil} brands have no sales data (NIL) and are not shown</span></div>`:''}`:'<div class="empty">The SOV vs sales gap cannot be computed: no brand has "bought in past month" data.</div>';
+  $('gapSec').innerHTML=`<div class="sec-hdr"><span class="sec-title">SOV vs Sales Gap</span><span class="kpi-i" tabindex="0">i<span class="kpi-tip">${DATA.meta&&DATA.meta.mode==='links'?'Gap = the brand\'s share of listings among your provided brands − its Unit Share (both measured only among your products).':'Gap = SOV (all) − Unit Share.'} Positive (orange) = visible but not selling in proportion. Negative (green) = selling above its visibility: brand pull or off-platform demand.</span></span></div><div class="sec-body pad">${body}</div>`;
+}
+
+function rIns(m){
+  const ins=[];const LK=!!(DATA.meta&&DATA.meta.mode==='links');
+  const sold=m.pm.filter(p=>p.units!=null).sort((a,b)=>b.units-a.units);
+  if(sold.length){const t=sold[0];ins.push({i:'👑',bg:'var(--amber-bg)',t:`<strong>${esc(t.brand)}</strong> leads with an estimated <strong>${F.k(t.units)} units/mo</strong> (${F.p(t.unitShare)} unit share)${t.price!=null?' at '+F.c(t.price):''}.`})}
+  const noU=m.pm.length-sold.length;
+  if(noU)ins.push({i:'🕳️',bg:'var(--bg)',t:`<strong>${noU}</strong> of ${m.pm.length} products show no "bought in past month" badge, so they are left out of unit and revenue shares. Read the shares as a view of the products that do show it.`});
+  const gs=m.brands.filter(b=>m.bSOV[b].gap!=null).map(b=>({b,g:m.bSOV[b].gap,s:m.bSOV[b]})).sort((a,b)=>b.g-a.g);
+  if(gs.length&&gs[0].g>.02)ins.push({i:'⚠️',bg:'var(--amber-bg)',t:`<strong>${esc(gs[0].b)}</strong> holds <strong>${F.p(LK?gs[0].s.sovRel:gs[0].s.sovAll)}</strong> of ${LK?'the search visibility among your brands':'search visibility'} but only <strong>${F.p(m.bm[gs[0].b].unitShare)}</strong> of unit sales (gap +${F.p(gs[0].g)}). Check price, reviews or listing quality.`});
+  const ng=gs[gs.length-1];
+  if(ng&&gs.length>1&&ng.g<-.02)ins.push({i:'🚀',bg:'var(--green-bg)',t:`<strong>${esc(ng.b)}</strong> sells above its visibility: <strong>${F.p(m.bm[ng.b].unitShare)}</strong> of units from <strong>${F.p(LK?ng.s.sovRel:ng.s.sovAll)}</strong> of ${LK?'visibility among your brands':'SOV'} (gap ${F.p(ng.g)}). Strong brand pull or off-platform demand.`});
+  const ad=m.brands.map(b=>{const s=m.bSOV[b];return{b,f:s.totC>0?s.adsC/s.totC:0,n:s.totC}}).filter(x=>x.n>=3).sort((a,b)=>b.f-a.f);
+  if(ad.length&&ad[0].f>.25)ins.push({i:'💰',bg:'var(--blue-bg)',t:`<strong>${esc(ad[0].b)}</strong> is the most ads-dependent: <strong>${F.p(ad[0].f,0)}</strong> of its placements are sponsored. Better organic ranking could cut ad spend.`});
+  const mo=m.pm.filter(p=>p.units&&p.review_count).map(p=>({b:p.brand,r:p.units/p.review_count})).sort((a,b)=>b.r-a.r);
+  if(mo.length>1)ins.push({i:'📈',bg:'var(--green-bg)',t:`<strong>${esc(mo[0].b)}</strong> has the best sales-to-reviews momentum (${mo[0].r.toFixed(2)} units per review), a sign of strong recent traction.`});
+  const top1={};m.kws.forEach(kw=>{const l=kw.listings.find(x=>!x.sponsored);if(l&&m.brands.includes(l.brand))top1[l.brand]=(top1[l.brand]||0)+1});
+  const t1=Object.entries(top1).sort((a,b)=>b[1]-a[1])[0];
+  if(t1)ins.push({i:'🥇',bg:'var(--accent-bg)',t:`<strong>${esc(t1[0])}</strong> takes the #1 organic slot on <strong>${t1[1]} of ${m.kws.length}</strong> keywords.`});
+  const pr=m.pm.filter(p=>p.price!=null&&p.price>0).sort((a,b)=>a.price-b.price);
+  if(pr.length>1){const cheap=pr[0],exp=pr[pr.length-1];if(cheap.brand!==exp.brand&&exp.revShare!=null&&cheap.revShare!=null)ins.push({i:'💡',bg:'var(--accent-bg)',t:`Price spread: <strong>${esc(exp.brand)}</strong> (${F.c(exp.price)}) costs <strong>${(exp.price/cheap.price).toFixed(1)}×</strong> more than <strong>${esc(cheap.brand)}</strong> (${F.c(cheap.price)}), and ${exp.revShare>cheap.revShare?'captures more revenue share':'has lower revenue share'}.`})}
+  $('insSec').innerHTML=`<div class="sec-hdr"><span class="sec-title">Auto-Generated Insights</span></div><div class="sec-body pad">${ins.length?`<ul class="ins-list">${ins.map(x=>`<li class="ins-item"><div class="ins-icon" style="background:${x.bg}">${x.i}</div><div>${x.t}</div></li>`).join('')}</ul>`:'<div class="empty">Not enough data to generate insights.</div>'}</div>`;
+}
+
+function rHist(m){
+  const el=$('histSec'),hist=DATA.history||[],dates=[...new Set(hist.map(h=>h.date))].sort();
+  const head=ex=>`<div class="sec-hdr"><span class="sec-title">History</span>${ex||''}</div>`;
+  if(dates.length<2){el.innerHTML=head()+`<div class="sec-body pad"><div class="empty">${dates.length?'Only one snapshot so far.':'No history yet.'} Each run appends today\'s snapshot; run the tool again on another day to see trends.</div></div>`;return}
+  const mode=S.histMode,val=e=>mode==='units'?e.units:(e.sov==null?null:e.sov*100);
+  const lastVal=b=>{const e=hist.filter(h=>h.brand===b&&val(h)!=null).sort((x,y)=>x.date<y.date?1:-1)[0];return e?val(e):-1};
+  const bs=m.brands.filter(b=>hist.some(h=>h.brand===b)).sort((a,b)=>lastVal(b)-lastVal(a)).slice(0,6);
+  const series=bs.map(b=>({b,col:bc(b),pts:dates.map(d=>{const e=hist.find(h=>h.date===d&&h.brand===b);return e?val(e):null})}));
+  const all=series.flatMap(s=>s.pts).filter(v=>v!=null);
+  const toggle=`<div class="sec-actions"><div class="toggle-grp"><button class="tog-btn${mode==='units'?' active':''}" data-h="units">Units</button><button class="tog-btn${mode==='sov'?' active':''}" data-h="sov">SOV</button></div></div>`;
+  if(!all.length){el.innerHTML=head(toggle)+'<div class="sec-body pad"><div class="empty">No history data for this metric.</div></div>';el.querySelectorAll('.tog-btn').forEach(b=>{b.onclick=()=>{S.histMode=b.dataset.h;render()}});return}
+  const W=680,H=260,L=54,R=16,T=14,B=30,mx=Math.max(...all)*1.12||1;
+  const x=i=>L+(i/(dates.length-1))*(W-L-R),y=v=>H-B-(v/mx)*(H-T-B);
+  const fmt=v=>mode==='units'?F.k(v):v.toFixed(0)+'%';
+  const dl=d=>new Date(d+'T00:00:00').toLocaleDateString('en-IN',{day:'numeric',month:'short'});
+  let svg=`<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="${mode==='units'?'Units':'SOV'} history by brand">`;
+  [0,.5,1].forEach(f=>{const v=mx*f;svg+=`<line x1="${L}" x2="${W-R}" y1="${y(v)}" y2="${y(v)}" stroke="var(--border)" stroke-width="1"/><text x="${L-8}" y="${y(v)+4}" text-anchor="end" font-size="11" fill="var(--text-3)">${fmt(v)}</text>`});
+  const tickIdx=[...new Set([0,Math.floor((dates.length-1)/2),dates.length-1])];
+  tickIdx.forEach(i=>{svg+=`<text x="${x(i)}" y="${H-8}" text-anchor="${i===0?'start':i===dates.length-1?'end':'middle'}" font-size="11" fill="var(--text-3)">${dl(dates[i])}</text>`});
+  series.forEach(s=>{let run=[];const flush=()=>{if(run.length>1)svg+=`<polyline points="${run.join(' ')}" fill="none" stroke="${s.col}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>`;run=[]};
+    s.pts.forEach((v,i)=>{if(v==null)flush();else run.push(`${x(i).toFixed(1)},${y(v).toFixed(1)}`)});flush();
+    let li=-1;s.pts.forEach((v,i)=>{if(v!=null)li=i});
+    s.pts.forEach((v,i)=>{if(v!=null)svg+=`<circle cx="${x(i).toFixed(1)}" cy="${y(v).toFixed(1)}" r="${i===li?4:3}" fill="${s.col}" stroke="var(--surface)" stroke-width="2"><title>${esc(s.b)} · ${dl(dates[i])}: ${fmt(v)}</title></circle>`})});
+  svg+='</svg>';
+  const leg=series.map(s=>`<span class="hist-lg">${dot(s.b)}${esc(s.b)}<b>${fmt(s.pts.filter(v=>v!=null).slice(-1)[0])}</b></span>`).join('');
+  el.innerHTML=head(toggle)+`<div class="sec-body pad"><div class="hist-leg">${leg}</div>${svg}</div>`;
+  el.querySelectorAll('.tog-btn').forEach(b=>{b.onclick=()=>{S.histMode=b.dataset.h;render()}});
+}
+
+/* ============================================================
+   DRAWER — Product Detail Panel
+   ============================================================ */
+function openDr(asin){
+  const p=DATA.products.find(x=>x.asin===asin);if(!p)return;
+  const m=calc(),pm=m.pm.find(x=>x.asin===asin)||{},sv=m.bSOV[p.brand]||{};
+  let kwR='';m.kws.forEach(kw=>{const r=(m.rm[kw.keyword]||{})[asin];const pos=r&&r.organic!=null?`#${r.organic}`:r&&r.best!=null?`#${r.best} (ad)`:'—';kwR+=`<div class="dr-kw"><span>${esc(kw.keyword)}</span><strong>${pos}</strong></div>`});
+  const img=`<div class="dr-img"><span class="pc-letter" style="font-size:24px">${esc(p.brand.charAt(0).toUpperCase())}</span>${p.image?`<img src="${esc(p.image)}" alt="" referrerpolicy="no-referrer" onerror="this.remove()">`:''}</div>`;
+  $('drBody').innerHTML=`<div style="display:flex;gap:16px;align-items:center;margin-bottom:20px">${img}<div><div class="pc-brand" style="font-size:13px;font-weight:600">${dot(p.brand)}${esc(p.brand)}</div><div style="font-weight:600;font-size:15px;margin-top:2px">${esc(p.title)}</div><div style="font-size:12px;color:var(--text-3);margin-top:4px">ASIN: ${esc(p.asin)}</div></div></div>
+  <div class="dr-grid">
+    <div class="dr-item"><div class="dr-il">Price</div><div class="dr-iv">${F.c(p.price)}</div></div>
+    <div class="dr-item"><div class="dr-il">MRP</div><div class="dr-iv" style="${p.mrp?'text-decoration:line-through;':''}color:var(--text-3)">${F.c(p.mrp)}</div></div>
+    <div class="dr-item"><div class="dr-il">Est. Units</div><div class="dr-iv">${p.units!=null?F.n(p.units):'<span class="nil">NIL</span>'}</div></div>
+    <div class="dr-item"><div class="dr-il">Unit Share</div><div class="dr-iv">${F.p(pm.unitShare)}</div></div>
+    <div class="dr-item"><div class="dr-il">Est. Revenue</div><div class="dr-iv">${F.c(pm.revenue)}</div></div>
+    <div class="dr-item"><div class="dr-il">Rev Share</div><div class="dr-iv">${F.p(pm.revShare)}</div></div>
+    <div class="dr-item"><div class="dr-il">Rating</div><div class="dr-iv">${p.rating!=null?'★ '+p.rating:'—'}</div></div>
+    <div class="dr-item"><div class="dr-il">Reviews</div><div class="dr-iv">${F.n(p.review_count)}</div></div>
+    <div class="dr-item"><div class="dr-il">BSR</div><div class="dr-iv">${p.bsr!=null?'#'+F.n(p.bsr):'—'}</div></div>
+    <div class="dr-item"><div class="dr-il">Bought Badge</div><div class="dr-iv" style="font-size:13px">${esc(p.bought_text||'—')}</div></div>
+  </div>
+  <div style="margin-top:24px"><div style="font-weight:600;font-size:14px;margin-bottom:8px">Keyword Positions</div>${kwR}</div>
+  <div style="margin-top:24px"><div style="font-weight:600;font-size:14px;margin-bottom:8px">Brand SOV</div>
+    <div style="font-size:13px;color:var(--text-2)">All: <strong>${F.p(sv.sovAll)}</strong> &nbsp;|&nbsp; Organic: <strong>${F.p(sv.sovOrg)}</strong> &nbsp;|&nbsp; Ads: <strong>${F.p(sv.sovAds)}</strong></div>
+    <div style="font-size:13px;color:var(--text-2);margin-top:6px">Gap: <strong>${sv.gap!=null?F.p(sv.gap):'—'}</strong></div>
+  </div>
+  <div style="margin-top:24px"><a href="https://www.amazon.in/dp/${encodeURIComponent(p.asin)}" target="_blank" rel="noopener" class="exp-btn">Open on Amazon.in ↗</a></div>`;
+  $('drw').classList.add('open');$('drOv').classList.add('open');$('drOv').setAttribute('aria-hidden','false');
+}
+function closeDr(){$('drw').classList.remove('open');$('drOv').classList.remove('open');$('drOv').setAttribute('aria-hidden','true')}
+
+/* ============================================================
+   KEYWORD MODAL
+   ============================================================ */
+function openKw(i){
+  const kw=DATA.keywords[i];if(!kw)return;
+  const tracked=new Set(DATA.products.map(p=>p.asin));
+  $('kwTitle').textContent=`Top ${kw.listings.length} — "${kw.keyword}"`;
+  $('kwBody').innerHTML=kw.listings.map(l=>`<div class="kl-item${tracked.has(l.asin)?' tracked':''}"><span class="kl-pos">${l.position}</span><span class="kl-brand">${dot(l.brand)}${esc(l.brand)}</span><span class="kl-asin">${esc(l.asin)}</span>${l.sponsored?'<span class="kl-badge">Sponsored</span>':''}</div>`).join('');
+  $('kwOv').classList.add('open');
+}
+function closeKw(){$('kwOv').classList.remove('open')}
+
+/* ============================================================
+   CSV EXPORT
+   ============================================================ */
+const csvCell=v=>{if(v==null)return'';const s=String(v);return/[",\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s};
+function exportCSV(m){
+  const hd=['Brand','Title','ASIN','Est Units','Unit Share %','Rev Share %','Price','MRP','Rating','Reviews','BSR'];
+  const rows=m.pm.map(p=>[p.brand,p.title,p.asin,p.units,p.unitShare!=null?F.pn(p.unitShare,2):'',p.revShare!=null?F.pn(p.revShare,2):'',p.price,p.mrp,p.rating,p.review_count,p.bsr]);
+  const csv='﻿'+[hd,...rows].map(r=>r.map(csvCell).join(',')).join('\n');
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));a.download='product_performance.csv';a.click();
+}
+
+/* ============================================================
+   IMPORT / LOAD DATA
+   ============================================================ */
+function loadFile(file){
+  const r=new FileReader();
+  r.onload=e=>{
+    try{setData(JSON.parse(e.target.result),false);render();toast('Data loaded: '+DATA.products.length+' products, '+DATA.keywords.length+' keywords')}
+    catch(err){toast('Load failed: '+err.message,'err')}
+  };
+  r.onerror=()=>toast('Could not read the file','err');
+  r.readAsText(file);
+}
+function fetchData(silent){
+  fetch('data.json',{cache:'no-store'}).then(r=>{if(!r.ok)throw new Error('data.json not found');return r.json()}).then(j=>{setData(j,false);render();if(!silent)toast('Data refreshed from data.json')}).catch(e=>{if(!silent)toast('Refresh failed: '+e.message,'err')});
+}
+
+/* ============================================================
+   THEME
+   ============================================================ */
+function setTheme(t){S.theme=t;document.documentElement.setAttribute('data-theme',t);document.querySelector('.ico-sun').style.display=t==='dark'?'none':'block';document.querySelector('.ico-moon').style.display=t==='dark'?'block':'none';if(INITED)render()}
+
+/* ============================================================
+   INIT
+   ============================================================ */
+function init(){
+  let loaded=false;
+  const inl=$('data-inline');
+  if(inl&&inl.textContent.trim()){try{setData(JSON.parse(inl.textContent),false);loaded=true}catch(e){console.error(e)}}
+  if(!loaded)setData(SAMPLE_DATA,true);
+  setTheme(window.matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light');
+  INITED=true;render();
+  $('themeBtn').onclick=()=>setTheme(S.theme==='light'?'dark':'light');
+  $('sbToggle').onclick=()=>{S.sbCollapsed=!S.sbCollapsed;$('sidebar').classList.toggle('collapsed',S.sbCollapsed)};
+  $('mobMenu').onclick=()=>{S.sbMob=!S.sbMob;$('sidebar').classList.toggle('mob-open',S.sbMob)};
+  $('sidebar').querySelectorAll('.sb-item').forEach(it=>{it.onclick=()=>{
+    $('sidebar').querySelectorAll('.sb-item').forEach(i=>i.classList.remove('active'));it.classList.add('active');
+    const map={dashboard:'kpiRow',products:'prodSec',keywords:'hmSec',history:'histSec',import:'impSec',settings:'impSec'};
+    const el=$(map[it.dataset.sec]||'kpiRow');if(el)el.scrollIntoView({behavior:'smooth'});
+    if(S.sbMob){S.sbMob=false;$('sidebar').classList.remove('mob-open')}
+  }});
+  $('drClose').onclick=closeDr;$('drOv').onclick=closeDr;
+  $('kwClose').onclick=closeKw;$('kwOv').onclick=e=>{if(e.target===$('kwOv'))closeKw()};
+  document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeDr();closeKw()}});
+  const zone=$('impZone'),fin=$('fileIn');
+  zone.onclick=()=>fin.click();
+  fin.onchange=e=>{if(e.target.files[0])loadFile(e.target.files[0]);fin.value=''};
+  zone.ondragover=e=>{e.preventDefault();zone.classList.add('dragover')};
+  zone.ondragleave=()=>zone.classList.remove('dragover');
+  zone.ondrop=e=>{e.preventDefault();zone.classList.remove('dragover');if(e.dataTransfer.files[0])loadFile(e.dataTransfer.files[0])};
+  $('printBtn').onclick=()=>window.print();
+  $('refreshBtn').onclick=()=>{if(/^https?:/.test(location.protocol))fetchData(false);else toast('To get fresh data, run the tool again (desktop app: Start, or python app.py ...) and reload this page.')};
+  if(!loaded&&/^https?:/.test(location.protocol))fetchData(true);
+}
+document.addEventListener('DOMContentLoaded',init);
+
+</script>
+</body>
+</html>
